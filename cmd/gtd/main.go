@@ -22,7 +22,7 @@ Hello, World!
 func main() {
 	log.Println("Hello, World!")
 
-	Must1(os.MkdirAll("./voice-notes", os.ModePerm))
+	Must1(os.MkdirAll("./voice-note", os.ModePerm))
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		entries := Must2(os.ReadDir("./voice-note"))
