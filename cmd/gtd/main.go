@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -18,13 +17,16 @@ var index = `
 Hello, World!
 `
 
+//go:generate go run ../htmgo/main.go
+
 func main() {
 	log.Println("Hello, World!")
 
 	Must1(os.MkdirAll("./voice-notes", os.ModePerm))
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "index.html", started, strings.NewReader(index))
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		Must1(Index{}.RenderWriter(r.Context(), w))
 	})
 
 	http.HandleFunc("POST /voice-note", func(w http.ResponseWriter, r *http.Request) {
