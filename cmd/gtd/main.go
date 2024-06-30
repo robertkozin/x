@@ -39,7 +39,7 @@ func main() {
 	})
 
 	log.Println("Listening on port 8080")
-	if err := http.ListenAndServe(":8080", nil); !errors.Is(err, http.ErrServerClosed) {
+	if err := http.ListenAndServe("0.0.0.0:8080", nil); !errors.Is(err, http.ErrServerClosed) {
 		log.Println(err)
 		os.Exit(1)
 	}
