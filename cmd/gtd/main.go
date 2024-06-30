@@ -25,14 +25,22 @@ func main() {
 	Must1(os.MkdirAll("./voice-notes", os.ModePerm))
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		entries := Must2(os.ReadDir("./voice-note"))
+		notes := make([]VoiceNote, len(entries))
+		for i, entry := range entries {
+			notes[i] = VoiceNote{Name: entry.Name()}
+		}
+
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		Must1(Index{}.RenderWriter(r.Context(), w))
+		Must1(Index{notes: notes}.RenderWriter(r.Context(), w))
 	})
+
+	http.Handle("GET /voice-note", http.FileServer(http.Dir("./voice-note")))
 
 	http.HandleFunc("POST /voice-note", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("POST /voice-note size=%d\n", r.ContentLength)
 		fname := fmt.Sprintf("%d.mp4", time.Now().Unix())
-		f := Must2(os.Create(filepath.Join("./voice-notes", fname)))
+		f := Must2(os.Create(filepath.Join("./voice-note", fname)))
 		defer f.Close()
 
 		Must2(io.Copy(f, r.Body))
@@ -45,6 +53,14 @@ func main() {
 		log.Println(err)
 		os.Exit(1)
 	}
+}
+
+type VoiceNote struct {
+	Name string
+}
+
+func (v VoiceNote) Url() string {
+	return fmt.Sprintf("https://gtd.rcp.r9n.co/voice-note/%s", v.Name)
 }
 
 func Must1(err error) {

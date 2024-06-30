@@ -1,11 +1,14 @@
 <!doctype html>
-<html lang="en" data-gocomponent="Index">
+<html lang="en" data-gocomponent="Index" data-gofields="notes []VoiceNote">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GTD</title>
 </head>
 <body>
-<h1>Hello, world! WOW</h1>
+<h1>Notes</h1>
+<ol data-gofor="_, note := range props.notes">
+    <li><audio control src=""></audio> <span data-goprint-string="note.Name"></span></li>
+</ol>
 </body>
 </html>
