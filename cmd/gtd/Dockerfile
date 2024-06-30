@@ -7,4 +7,8 @@ RUN go mod download
 
 COPY ./cmd/gtd/*.go ./cmd/gtd/
 
-CMD go run ./cmd/gtd/main.go
+RUN go install ./cmd/gtd
+
+WORKDIR /data
+
+ENTRYPOINT ["gtd"]
