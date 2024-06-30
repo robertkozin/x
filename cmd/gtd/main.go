@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -35,7 +34,7 @@ func main() {
 		Must1(Index{notes: notes}.RenderWriter(r.Context(), w))
 	})
 
-	http.Handle("GET /voice-note", http.FileServer(http.Dir("./voice-note")))
+	http.Handle("GET /voice-note/", http.FileServer(http.Dir("./voice-note")))
 
 	http.HandleFunc("POST /voice-note", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("POST /voice-note size=%d\n", r.ContentLength)
@@ -56,14 +55,11 @@ func main() {
 		log.Println(err)
 		os.Exit(1)
 	}
+	log.Println("Done")
 }
 
 type VoiceNote struct {
 	Name string
-}
-
-func (v VoiceNote) Url() string {
-	return fmt.Sprintf("https://gtd.rcp.r9n.co/voice-note/%s", v.Name)
 }
 
 func Must1(err error) {
