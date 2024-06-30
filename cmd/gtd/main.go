@@ -24,7 +24,7 @@ func main() {
 
 	Must1(os.MkdirAll("./voice-note", os.ModePerm))
 
-	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		entries := Must2(os.ReadDir("./voice-note"))
 		notes := make([]VoiceNote, len(entries))
 		for i, entry := range entries {

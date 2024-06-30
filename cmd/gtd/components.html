@@ -8,7 +8,7 @@
 <body>
 <h1>Notes</h1>
 <ol data-gofor="_, note := range props.notes">
-    <li><audio controls src="/audio-note/{{note}}"></audio> <span data-goprint-string="note.Name"></span></li>
+    <li><audio controls src="/audio-note/{{note.Name}}"></audio><span data-goprint-string="note.Name"></span></li>
 </ol>
 </body>
 </html>

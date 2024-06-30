@@ -290,8 +290,6 @@ func (p *Trans) writeTag() {
 			// TODO: escape
 			p.w.Htmlf(" %s=\"%s\"", attr.key, attr.val)
 		}
-
-		p.w.Htmlf(` %s="%s"`, attr.key, attr.val)
 	}
 
 	if p.z.tt == SelfClosingTagToken {
