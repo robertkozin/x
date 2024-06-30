@@ -6,6 +6,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY ./cmd/gtd/*.go ./cmd/gtd/
+COPY ./cmd/htmgo/*.go ./cmd/htmgo/
+COPY ./htmgo/*.go ./htmgo/
 
 RUN go install ./cmd/gtd
 
