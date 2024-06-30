@@ -269,6 +269,28 @@ func (p *Trans) doOpenTag(tag string) {
 func (p *Trans) writeTag() {
 	p.w.Htmlf("%s<%s", p.indent, p.tag)
 	for _, attr := range p.attrs {
+		val := attr.val
+		s, e, ok := hasOpenClose(val)
+		if ok {
+			p.w.Gof("w.Attr(%q", attr.key)
+			for ok {
+				if len(val[:s]) > 0 {
+					p.w.Gof(",%q", val[:s])
+				}
+				p.w.Gof(",%s", val[s+2:e])
+				val = val[e+2:]
+				s, e, ok = hasOpenClose(val)
+			}
+			if len(val) > 0 {
+				p.w.Gof(",%s", val)
+			}
+			p.w.Gof(")\n")
+
+		} else {
+			// TODO: escape
+			p.w.Htmlf(" %s=\"%s\"", attr.key, attr.val)
+		}
+
 		p.w.Htmlf(` %s="%s"`, attr.key, attr.val)
 	}
 
@@ -299,3 +321,10 @@ const (
 	goImport
 	goPrintString
 )
+
+func hasOpenClose(b []byte) (start int, end int, ok bool) {
+	start = bytes.Index(b, []byte{'{', '{'})
+	end = bytes.Index(b, []byte{'}', '}'}) // TODO: should be b[start:] to prevent thingys that are the same %% %%
+	ok = end > start
+	return
+}

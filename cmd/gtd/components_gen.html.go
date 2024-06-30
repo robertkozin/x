@@ -14,9 +14,11 @@ func (props Index) RenderWriter(ctx context.Context, w io.Writer) error {
 }
 
 func (props Index) Render(ctx context.Context, w *htmgo.Writer) error {
-	w.Html("\n<html lang=\"en\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <title>GTD</title>\n</head>\n<body>\n<h1>Notes</h1>\n<ol>")
+	w.Html("\n<html lang=\"en\" lang=\"en\">\n<head>\n    <meta charset=\"utf-8\" charset=\"utf-8\">\n    <meta name=\"viewport\" name=\"viewport\" content=\"width=device-width, initial-scale=1\" content=\"width=device-width, initial-scale=1\">\n    <title>GTD</title>\n</head>\n<body>\n<h1>Notes</h1>\n<ol>")
 	for _, note := range props.notes {
-		w.Html("\n    <li>\n    <audio control=\"\" src=\"\">\n    </audio> <span>")
+		w.Html("\n    <li>\n    <audio controls=\"\" controls=\"\"")
+		w.Attr("src", "/audio-note/", note)
+		w.Html(" src=\"/audio-note/{{note}}\">\n    </audio> <span>")
 		w.PrintString(note.Name)
 		w.Html(" </span> </li>")
 	}

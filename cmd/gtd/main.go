@@ -39,7 +39,10 @@ func main() {
 
 	http.HandleFunc("POST /voice-note", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("POST /voice-note size=%d\n", r.ContentLength)
-		fname := fmt.Sprintf("%d.mp4", time.Now().Unix())
+
+		fname := r.Header.Get("Filename")
+		fname = filepath.Base(fname)
+
 		f := Must2(os.Create(filepath.Join("./voice-note", fname)))
 		defer f.Close()
 
