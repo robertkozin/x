@@ -1,1 +1,3 @@
-compose-data
+compose-data/
+.env
+.DS_STORE

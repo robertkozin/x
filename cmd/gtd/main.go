@@ -2,11 +2,16 @@ package main
 
 import (
 	"errors"
+	"github.com/sashabaranov/go-openai"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -16,19 +21,24 @@ var index = `
 Hello, World!
 `
 
-//go:generate go run ../htmgo/main.go
+var (
+	db  *gorm.DB
+	oai *openai.Client
+)
+
+//go:generate go run github.com/robertkozin/x/cmd/htmgo
 
 func main() {
 	log.Println("Hello, World!!!")
 
 	Must1(os.MkdirAll("./voice-note", os.ModePerm))
 
+	oai = openai.NewClient(os.Getenv("OPENAI_KEY"))
+	db = Must(getDB())
+
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		entries := Must2(os.ReadDir("./voice-note"))
-		notes := make([]VoiceNote, len(entries))
-		for i, entry := range entries {
-			notes[i] = VoiceNote{Name: entry.Name()}
-		}
+		var notes []VoiceNote
+		db.Find(&notes)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		Must1(Index{notes: notes}.RenderWriter(r.Context(), w))
@@ -39,15 +49,26 @@ func main() {
 	http.HandleFunc("POST /new-voice-note", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("POST /voice-note size=%d\n", r.ContentLength)
 
-		fname := r.Header.Get("Filename")
-		fname = filepath.Base(fname)
+		filename := r.Header.Get("Filename")
+		filename = filepath.Base(filename)
+		capturedAt := GetFilenameTimestamp(filename)
 
-		f := Must2(os.Create(filepath.Join("./voice-note", fname)))
+		f := Must(os.Create(filepath.Join("./voice-note", filename)))
 		defer f.Close()
 
-		Must2(io.Copy(f, r.Body))
+		Must(io.Copy(f, r.Body))
 
-		log.Printf("Saved %s\n", fname)
+		vn := &VoiceNote{CapturedAt: capturedAt, Filename: filename}
+		db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "filename"}},
+			UpdateAll: true,
+		}).Save(vn)
+
+		log.Printf("Saved %s\n", filename)
+
+		go func() {
+			vn.Transcribe()
+		}()
 	})
 
 	log.Println("Listening on port 8080")
@@ -58,8 +79,12 @@ func main() {
 	log.Println("Done")
 }
 
-type VoiceNote struct {
-	Name string
+var matchNumber = regexp.MustCompile(`\d+`)
+
+func GetFilenameTimestamp(filename string) time.Time {
+	number := matchNumber.FindString(filename)
+	millis := Must(strconv.Atoi(number))
+	return time.UnixMilli(int64(millis))
 }
 
 func Must1(err error) {
@@ -69,9 +94,9 @@ func Must1(err error) {
 	return
 }
 
-func Must2[T any](v T, err error) T {
+func Must[T any](v T, err error) T {
 	if err != nil {
-		panic("Must2:" + err.Error())
+		panic("Must:" + err.Error())
 	}
 	return v
 }

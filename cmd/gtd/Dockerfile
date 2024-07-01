@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine
+FROM golang:1.22
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY ./cmd/gtd/*.go ./cmd/gtd/
 COPY ./cmd/htmgo/*.go ./cmd/htmgo/
 COPY ./htmgo/*.go ./htmgo/
 
-RUN go install ./cmd/gtd
+RUN CGO_ENABLED=1 go install ./cmd/gtd
 
 WORKDIR /data
 

@@ -149,9 +149,7 @@ func (p *Trans) DoRegular(tag string) {
 		case ErrorToken:
 			return
 		case TextToken:
-			if len(p.data) > 0 {
-				p.w.Htmlf("%s", p.data)
-			}
+			p.doText()
 		case StartTagToken, SelfClosingTagToken:
 			if p.hasDirectives {
 				p.doTag(p.tag)
@@ -168,6 +166,22 @@ func (p *Trans) DoRegular(tag string) {
 		case DoctypeToken:
 			p.w.Htmlf("<!DOCTYPE %s>", p.data)
 		}
+	}
+}
+
+func (p *Trans) doText() {
+	raw := p.data
+
+	i, i2, ok := hasOpenClose(raw)
+	for ok {
+		p.w.Htmlf("%s", raw[:i])
+		p.w.Gof("w.Print(%s)\n", raw[i+2:i2])
+		raw = raw[i2+2:]
+		i, i2, ok = hasOpenClose(raw)
+	}
+
+	if len(raw) > 0 {
+		p.w.Htmlf("%s", raw)
 	}
 }
 
