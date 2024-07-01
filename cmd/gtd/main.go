@@ -19,7 +19,7 @@ Hello, World!
 //go:generate go run ../htmgo/main.go
 
 func main() {
-	log.Println("Hello, World!")
+	log.Println("Hello, World!!!")
 
 	Must1(os.MkdirAll("./voice-note", os.ModePerm))
 
@@ -34,9 +34,9 @@ func main() {
 		Must1(Index{notes: notes}.RenderWriter(r.Context(), w))
 	})
 
-	http.Handle("GET /voice-note/", http.FileServer(http.Dir("./voice-note")))
+	http.Handle("/voice-note/", http.FileServer(http.Dir(".")))
 
-	http.HandleFunc("POST /voice-note", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("POST /new-voice-note", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("POST /voice-note size=%d\n", r.ContentLength)
 
 		fname := r.Header.Get("Filename")
