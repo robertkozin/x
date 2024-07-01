@@ -58,13 +58,16 @@ func main() {
 
 		Must(io.Copy(f, r.Body))
 
-		vn := &VoiceNote{CapturedAt: capturedAt, Filename: filename}
-		db.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "filename"}},
-			UpdateAll: true,
-		}).Save(vn)
+		vn := VoiceNote{CapturedAt: capturedAt, Filename: filename}
 
-		log.Printf("Saved %s\n", filename)
+		db.Clauses(
+			clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"captured_at", "filename"}),
+			},
+			clause.Returning{},
+		).Select("CapturedAt", "Filename").Create(&vn)
+
+		log.Printf("Saved: %v\n", vn.Filename)
 
 		go func() {
 			vn.Transcribe()
