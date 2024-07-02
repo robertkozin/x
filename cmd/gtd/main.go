@@ -31,23 +31,28 @@ var (
 func main() {
 	log.Println("Hello, World!!!")
 
-	Must1(os.MkdirAll("./voice-note", os.ModePerm))
+	NoErr(os.MkdirAll("./voice-note", os.ModePerm))
 
 	oai = openai.NewClient(os.Getenv("OPENAI_KEY"))
 	db = Must(getDB())
 
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		var notes []VoiceNote
-		db.Find(&notes)
+		var notes []*VoiceNote
+		db.Order("captured_at desc").Find(&notes)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		Must1(Index{notes: notes}.RenderWriter(r.Context(), w))
+		NoErr(Index{notes: notes}.RenderWriter(r.Context(), w))
 	})
 
 	http.Handle("/voice-note/", http.FileServer(http.Dir(".")))
 
 	http.HandleFunc("POST /new-voice-note", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("POST /voice-note size=%d\n", r.ContentLength)
+
+		if r.ContentLength < 14_000 {
+			// 14kb is about 1 second of working audio
+			return
+		}
 
 		filename := r.Header.Get("Filename")
 		filename = filepath.Base(filename)
@@ -90,9 +95,9 @@ func GetFilenameTimestamp(filename string) time.Time {
 	return time.UnixMilli(int64(millis))
 }
 
-func Must1(err error) {
+func NoErr(err error) {
 	if err != nil {
-		panic("Must1:" + err.Error())
+		panic("NoErr:" + err.Error())
 	}
 	return
 }
@@ -102,4 +107,20 @@ func Must[T any](v T, err error) T {
 		panic("Must:" + err.Error())
 	}
 	return v
+}
+
+func (i Index) NoteTitle(note *VoiceNote, lastNote *VoiceNote) string {
+	t := note.Text
+	if t == "" {
+		t = `(none)`
+	} else if len(t) > 150 {
+		t = t[:150]
+		t = t + "..."
+	}
+
+	if lastNote == nil || lastNote.CapturedAt.Day() != note.CapturedAt.Day() {
+		t = t + " " + "<strong>" + note.CapturedAt.Format("Jan _2") + "</strong>"
+	}
+
+	return t
 }

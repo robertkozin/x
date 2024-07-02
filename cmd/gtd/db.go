@@ -7,20 +7,29 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
+	"sync"
 	"time"
 )
 
 type VoiceNote struct {
-	gorm.Model
+	ID         uint `gorm:"primarykey"`
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 	CapturedAt time.Time
+	Order      int    // TODO: make this work, make it initially be captured at
 	Filename   string `gorm:"unique"`
-	Transcript string
+	Text       string
 }
 
+var transcribeMutex sync.Mutex
+
 func (vn *VoiceNote) Transcribe() {
-	if vn.Transcript != "" {
+	if vn.Text != "" {
 		return
 	}
+
+	transcribeMutex.Lock()
+	defer transcribeMutex.Unlock()
 
 	res, err := oai.CreateTranscription(context.Background(), openai.AudioRequest{
 		Model:    openai.Whisper1,
@@ -33,7 +42,7 @@ func (vn *VoiceNote) Transcribe() {
 
 	db.Model(vn).Update("transcript", res.Text)
 
-	log.Printf("added transcript to %q: %q\n\n", vn.Filename, vn.Transcript)
+	log.Printf("added transcript to %q: %q\n\n", vn.Filename, vn.Text)
 
 	return
 }

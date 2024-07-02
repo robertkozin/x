@@ -111,6 +111,8 @@ func mapDirectives(b []byte) int {
 		return goFields
 	case "import":
 		return goImport
+	case "expr":
+		return goExpr
 	default:
 		return goNone
 	}
@@ -223,6 +225,10 @@ func (p *Trans) doOpenTag(tag string) {
 		p.w.Gof("var(%s)\n", p.directives[goVar])
 	}
 
+	if p.directives[goExpr] != nil {
+		p.w.Gof("%s\n", p.directives[goExpr])
+	}
+
 	if p.directives[goComment] != nil {
 		p.w.Htmlf("<!--")
 		defer p.w.Htmlf("-->")
@@ -332,6 +338,7 @@ const (
 	goFields
 	goImport
 	goPrintString
+	goExpr
 )
 
 func hasOpenClose(b []byte) (start int, end int, ok bool) {
