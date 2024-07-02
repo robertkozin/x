@@ -40,7 +40,7 @@ func (vn *VoiceNote) Transcribe() {
 		log.Println("transcribe error", err)
 	}
 
-	db.Model(vn).Update("transcript", res.Text)
+	db.Model(vn).Update("Text", res.Text)
 
 	log.Printf("added transcript to %q: %q\n\n", vn.Filename, vn.Text)
 
