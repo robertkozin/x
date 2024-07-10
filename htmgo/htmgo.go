@@ -78,6 +78,26 @@ func (p *Trans) Next() TokenType {
 	return tt
 }
 
+const (
+	goNone = iota
+	goIf
+	goElseIf
+	goElse
+	goFor
+	goPrint
+	goVar
+	goOmit
+	goIgnore
+	goComment
+	goSlot
+	goComponent
+	goFields
+	goImport
+	goPrintString
+	goExpr
+	goTimeFormat
+)
+
 func mapDirectives(b []byte) int {
 	b = bytes.TrimPrefix(b, []byte("data-"))
 	b = bytes.TrimPrefix(b, []byte("go-"))
@@ -113,6 +133,8 @@ func mapDirectives(b []byte) int {
 		return goImport
 	case "expr":
 		return goExpr
+	case "time-format", "timeformat":
+		return goTimeFormat
 	default:
 		return goNone
 	}
@@ -211,11 +233,7 @@ func (p *Trans) doOpenTag(tag string) {
 			p.w.Gof("type %s struct {}\n\n", p.directives[goComponent])
 		}
 
-		p.w.Gof(`func (props %[1]s) RenderWriter(ctx context.Context, w io.Writer) error {
-		return htmgo.RenderWriter(ctx, w, props.Render)
-	}
-	
-	func (props %[1]s) Render(ctx context.Context, w *htmgo.Writer) error {
+		p.w.Gof(`func (props %[1]s) Render(ctx context.Context, w *htmgo.Writer) error {
 	`, p.directives[goComponent])
 		defer p.w.Gof("return w.Err()\n}\n\n")
 		defer func() { p.w.Htmlf("%s", p.indent) }()
@@ -227,6 +245,11 @@ func (p *Trans) doOpenTag(tag string) {
 
 	if p.directives[goExpr] != nil {
 		p.w.Gof("%s\n", p.directives[goExpr])
+	}
+
+	if p.directives[goTimeFormat] != nil {
+		p.w.Gof("oldFormat := w.TimeFormat(%s)\n", p.directives[goTimeFormat])
+		defer p.w.Gof("_ = w.TimeFormat(oldFormat)\n")
 	}
 
 	if p.directives[goComment] != nil {
@@ -321,25 +344,6 @@ func (p *Trans) writeTag() {
 func (p *Trans) writeCloseTag() {
 	p.w.Htmlf("%s</%s>", p.indent, p.tag)
 }
-
-const (
-	goNone = iota
-	goIf
-	goElseIf
-	goElse
-	goFor
-	goPrint
-	goVar
-	goOmit
-	goIgnore
-	goComment
-	goSlot
-	goComponent
-	goFields
-	goImport
-	goPrintString
-	goExpr
-)
 
 func hasOpenClose(b []byte) (start int, end int, ok bool) {
 	start = bytes.Index(b, []byte{'{', '{'})

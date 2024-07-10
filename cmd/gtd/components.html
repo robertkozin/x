@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" go-component="Index" go-fields="notes []*VoiceNote; lastNote *VoiceNote">
+<html lang="en" go-component="Index" go-fields="notes []*Note; lastNote *Note">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -49,12 +49,14 @@
 <!--    </label>-->
 
 
-    <div go-for="_, note := range props.notes" style="display: flex; flex-direction: column; gap: 5px;">
+    <div go-for="_, note := range props.notes"
+         go-timeformat='"Monday Jan _2 3:04PM"'
+         style="display: flex; flex-direction: column; gap: 5px;">
         <details data-id="{{note.ID}}">
             <summary go-print-string='props.NoteTitle(note, props.lastNote)'></summary>
-            <p>{{note.CapturedAt.Format("Monday Jan _2 3:04PM")}}</p>
-            <p data-trans go-if='note.Text != ""' go-print-string="note.Text"></p>
-            <p data-trans go-else>(none)</p>
+            <p go-print='note.CapturedAt'></p>
+            <p data-text go-if='note.Text != ""' go-print-string="note.Text"></p>
+            <p data-text go-else>(none)</p>
 
 
             <p>
@@ -78,15 +80,25 @@
 
     document.querySelectorAll("[data-edit]").forEach(el => {
         el.addEventListener("click", e => {
-            let det = e.currentTarget.closest("details")
-            let trans = det.querySelector("[data-trans]").innerText
-            console.log("new", prompt("Edit", trans)) // will return null if cancel
+            let note = e.currentTarget.closest("details")
+            let text = note.querySelector("[data-text]").innerText
+            let newText = prompt("Edit", text)
+            if (newText && text !== newText) {
+                let data = new FormData()
+                data.set("text", newText)
+                fetch(`/note/${note.dataset.id}/edit`, {method: "POST", body: data})
+                    .then(() => location.reload())
+            }
         })
     })
 
     document.querySelectorAll("[data-delete]").forEach(el => {
-        el.addEventListener("click", e => {
-            confirm("Delete?")
+        el.addEventListener("click", ev => {
+            let note = ev.currentTarget.closest("details")
+            if (confirm("Delete?")) {
+                fetch(`/note/${note.dataset.id}/delete`, {method: "POST"})
+                    .then(() => location.reload())
+            }
         })
     })
 </script>

@@ -2,8 +2,6 @@
 - delete notes from table
 - edit notes
 - jsonfile?
-- cut off title
-- dont repeat date if day rounded is the same
 - save last volume
 
 - intergrate with litestream

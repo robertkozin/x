@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -75,7 +76,10 @@ func (w *Writer) appendPrint(v any) {
 	case float32:
 		w.buf = strconv.AppendFloat(w.buf, float64(x), 'f', -1, 32)
 	case time.Time:
-		x.AppendFormat(w.buf, time.RFC3339Nano)
+		if w.timeFormat == "" {
+			w.timeFormat = time.RFC3339
+		}
+		w.buf = x.AppendFormat(w.buf, w.timeFormat)
 	case time.Duration:
 		w.buf = append(w.buf, x.String()...)
 	case fmt.Stringer:
@@ -87,6 +91,12 @@ func (w *Writer) appendPrint(v any) {
 	}
 
 	//w.buf = fmt.Append(w.buf, v)
+}
+
+func (w *Writer) TimeFormat(newFormat string) (oldFormat string) {
+	oldFormat = w.timeFormat
+	w.timeFormat = newFormat
+	return
 }
 
 func (w *Writer) Reset() {
@@ -107,6 +117,25 @@ var writerPool = sync.Pool{
 
 var noop = func(*Writer) {}
 var release = func(w *Writer) { w.buf = w.buf[:0]; w.wr = nil; writerPool.Put(w) }
+
+type Renderer interface {
+	Render(ctx context.Context, w *Writer) error
+}
+
+func Render(ctx context.Context, w io.Writer, r Renderer) error {
+	ww := writerPool.Get().(*Writer)
+	ww.wr = w
+	defer release(ww)
+
+	if rw, ok := w.(http.ResponseWriter); ok {
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	}
+	if _, err := w.Write([]byte("<!doctype html>\n")); err != nil {
+		return err
+	}
+
+	return r.Render(ctx, ww)
+}
 
 func RenderWriter(ctx context.Context, w io.Writer, fn func(context.Context, *Writer) error) error {
 	ww := writerPool.Get().(*Writer)
@@ -148,8 +177,6 @@ func (w *Writer) PrintString(s string) {
 
 func (w *Writer) Print(v any) {
 	w.appendPrint(v)
-	//w.buf = fmt.Append(w.buf, v)
-	//w.flush()
 	if w.err == nil {
 		_, w.err = w.wr.Write(w.buf)
 	}
