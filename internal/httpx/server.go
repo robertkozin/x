@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -18,7 +19,7 @@ func ListenAndServe(ctx context.Context, handler http.Handler) {
 		ok               bool
 	)
 
-	ctx, stop = signal.NotifyContext(ctx, os.Interrupt)
+	ctx, stop = signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
 	if host, ok = os.LookupEnv("HOST"); !ok {
