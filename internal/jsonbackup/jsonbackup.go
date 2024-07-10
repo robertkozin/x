@@ -32,6 +32,8 @@ func Must[T any](data *T, path string) func() {
 		}
 	}
 
+	// TODO: Periodic backup
+
 	// save
 	return func() {
 		var err1 error

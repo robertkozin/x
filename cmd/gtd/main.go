@@ -90,7 +90,7 @@ func index(c *httpx.Ctx) (err error) {
 	defer mu.RUnlock()
 
 	notes := sortMap(notes, func(a *Note, b *Note) int {
-		return a.ID - b.ID
+		return b.ID - a.ID
 	})
 
 	return htmgo.Render(context.Background(), c.Response(), Index{notes: notes})
