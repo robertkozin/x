@@ -80,8 +80,8 @@
     vol(0.30)
 
     document.querySelectorAll("[data-edit]").forEach(el => {
-        el.addEventListener("click", e => {
-            let note = e.currentTarget.closest("details")
+        el.addEventListener("click", ev => {
+            let note = ev.currentTarget.closest("details")
             let text = note.querySelector("[data-text]").innerText
             let newText = prompt("Edit", text)
             if (newText && text !== newText) {
@@ -95,7 +95,7 @@
 
     document.querySelectorAll("[data-process]").forEach(el => {
         el.addEventListener("click", ev => {
-            let note = e.currentTarget.closest("details")
+            let note = ev.currentTarget.closest("details")
             fetch(`/note/${note.dataset.id}/process`, {method: "POST"}).then(() => location.reload())
         })
     })
