@@ -230,7 +230,7 @@ func (p *Trans) doOpenTag(tag string) {
 		if p.directives[goFields] != nil {
 			p.w.Gof("type %s struct {%s}\n\n", p.directives[goComponent], p.directives[goFields])
 		} else {
-			p.w.Gof("type %s struct {}\n\n", p.directives[goComponent])
+			//p.w.Gof("type %s struct {}\n\n", p.directives[goComponent])
 		}
 
 		p.w.Gof(`func (props %[1]s) Render(ctx context.Context, w *htmgo.Writer) error {

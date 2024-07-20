@@ -62,6 +62,7 @@
             <p>
                 <button data-edit>Edit</button>
                 <button data-delete>Delete</button>
+                <button data-process>Process</button>
             </p>
             <p>
                 <audio controls preload="none" src="/voice-note/{{note.Filename}}"></audio>
@@ -89,6 +90,13 @@
                 fetch(`/note/${note.dataset.id}/edit`, {method: "POST", body: data})
                     .then(() => location.reload())
             }
+        })
+    })
+
+    document.querySelectorAll("[data-process]").forEach(el => {
+        el.addEventListener("click", ev => {
+            let note = e.currentTarget.closest("details")
+            fetch(`/note/${note.dataset.id}/process`, {method: "POST"}).then(() => location.reload())
         })
     })
 

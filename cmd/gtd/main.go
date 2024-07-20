@@ -37,6 +37,9 @@ type Note struct {
 	CapturedAt time.Time
 	Filename   string
 	Text       string
+	Summary    string
+	Topic      string
+	Due        time.Time
 }
 
 //go:generate go run github.com/robertkozin/x/cmd/htmgo
@@ -68,7 +71,7 @@ func run(ctx context.Context) (err error) {
 	route.Use(r, func(next func(*httpx.Ctx) error) func(*httpx.Ctx) error {
 		return func(ctx *httpx.Ctx) error {
 			if err := next(ctx); err != nil {
-				http.Error(ctx.Response(), err.Error(), 500)
+				http.Error(ctx.Response(), fmt.Sprintf("%+v", err), 500)
 			}
 			return nil
 		}
@@ -79,6 +82,7 @@ func run(ctx context.Context) (err error) {
 	route.Handle(r, "POST", "/note", postNote)
 	route.Handle(r, "POST", "/note/{id}/delete", deleteNote)
 	route.Handle(r, "POST", "/note/{id}/edit", editNote)
+	route.Handle(r, "POST", "/note/{id}/process", processNote)
 
 	httpx.ListenAndServe(ctx, r.Mux)
 
@@ -97,12 +101,19 @@ func index(c *httpx.Ctx) (err error) {
 }
 
 func (i Index) NoteTitle(note *Note, lastNote *Note) string {
-	t := note.Text
+	t := note.Summary
+	if t == "" {
+		t = note.Text
+	}
 	if t == "" {
 		t = `(none)`
 	} else if len(t) > 150 {
 		t = t[:150]
 		t = t + "..."
+	}
+
+	if note.Topic != "" {
+		t = fmt.Sprintf("[%s] %s", note.Topic, t)
 	}
 
 	if lastNote == nil || lastNote.CapturedAt.Day() != note.CapturedAt.Day() {
@@ -152,11 +163,10 @@ func postNote(c *httpx.Ctx) error {
 			UpdatedAt:  time.Now().UTC(),
 			CapturedAt: time.UnixMilli(int64(id)),
 			Filename:   name,
-			Text:       "",
 		}
 
 		notes[id] = note
-		if err := transcribe(note); err != nil {
+		if err := process(context.Background(), note); err != nil {
 			slog.Error("transcribing voice note", "error", err)
 		}
 	}()
@@ -208,25 +218,19 @@ func editNote(c *httpx.Ctx) error {
 	return nil
 }
 
-func transcribe(note *Note) error {
-	if note.Text != "" {
+func processNote(c *httpx.Ctx) error {
+	mu.Lock()
+	mu.Unlock()
+
+	rawID := c.Request().PathValue("id")
+	id, _ := strconv.Atoi(rawID)
+
+	note, ok := notes[id]
+	if !ok {
 		return nil
 	}
 
-	res, err := oai.CreateTranscription(context.Background(), openai.AudioRequest{
-		Model:    openai.Whisper1,
-		FilePath: filepath.Join(voiceNotesDir, note.Filename),
-		Language: "en",
-	})
-	if err != nil {
-		return fmt.Errorf("transribe: %w", err)
-	}
-
-	note.Text = res.Text
-
-	slog.Info("transcribed audio", "file", note.Filename, "text", note.Text)
-
-	return nil
+	return process(c.Request().Context(), note)
 }
 
 func parseNoteFilename(filename string) (name string, id int, err error) {

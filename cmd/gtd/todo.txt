@@ -1,7 +1,1 @@
 - proper timestamps (timezone)
-- delete notes from table
-- edit notes
-- jsonfile?
-- save last volume
-
-- intergrate with litestream
