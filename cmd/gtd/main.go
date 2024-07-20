@@ -116,6 +116,10 @@ func (i Index) NoteTitle(note *Note, lastNote *Note) string {
 		t = fmt.Sprintf("[%s] %s", note.Topic, t)
 	}
 
+	if !note.Due.IsZero() {
+		t = t + " (" + note.Due.Format("Monday Jan _2 3:04PM") + ")"
+	}
+
 	if lastNote == nil || lastNote.CapturedAt.Day() != note.CapturedAt.Day() {
 		t = t + " " + "<strong>" + note.CapturedAt.Format("Jan _2") + "</strong>"
 	}
