@@ -97,7 +97,7 @@ func extract(ctx context.Context, note *Note) error {
 			},
 			{
 				Role:    openai.ChatMessageRoleUser,
-				Content: "I, uh, should call Chefery.",
+				Content: note.Text,
 			},
 		},
 		Tools: []openai.Tool{tool},
