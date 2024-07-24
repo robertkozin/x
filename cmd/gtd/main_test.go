@@ -49,7 +49,7 @@ func TestOaiFunc(t *testing.T) {
 	prompt := fmt.Sprintf(`Please extract the following information from the transcribed voice note:
 
 1. Summary: A short, actionable title summarizing the task if needed.
-2. Topic/Subject: A one word main topic or subject that the note is about. Choose from the following if applicable: Health, Chores, Tasks, Ideas, Notes, Reminders, Lola, Friends, Work, Projects.
+2. Category/Subject: A one word main topic or subject that the note is about. Choose from the following if applicable: Health, Chores, Tasks, Ideas, Notes, Reminders, Lola, Friends, Work, Projects.
 3. Due Date and Time (if mentioned): Any specified due date and time for the task. The current date and time is %s %s.
 `, time.Now().Format(time.DateOnly), time.Now().Format(time.Kitchen))
 

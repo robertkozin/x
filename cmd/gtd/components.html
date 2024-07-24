@@ -23,13 +23,31 @@
         }
 
         details + details {
-            border-top: 1px solid var(--fg);
+            margin-top: 5px;
         }
 
         details summary {
             cursor: pointer;
             /*font-size: medium;*/
             user-select: none;
+        }
+
+        .divider {
+            font-size: small;
+            display: flex;
+            align-items: center;
+        }
+
+        .divider::before, .divider::after {
+            flex: 1;
+            content: '';
+            padding: 1px;
+            background-color: var(--fg);
+            margin: 5px;
+        }
+
+        .due {
+            text-decoration: underline;
         }
 
         audio {
@@ -41,34 +59,28 @@
 <body>
 <main>
     <h1>Notes</h1>
-    <hr>
-
-<!--    <label>-->
-<!--        Volume-->
-<!--        <input type="range" value="0.3" max="1" min="0" step="0.01" onchange="vol(this.value)">-->
-<!--    </label>-->
-
 
     <div go-for="_, note := range props.notes"
          go-timeformat='"Monday Jan _2 3:04PM"'
-         style="display: flex; flex-direction: column; gap: 5px;">
-        <details data-id="{{note.ID}}">
+         style="display: flex; flex-direction: column;">
+        <div class="divider" go-if="day, needs := props.needsDivider(note, props.lastNote); needs">{{day}}</div>
+        <details data-id="{{note.ID}}" go-expr="props.lastNote = note">
             <summary go-print-string='props.NoteTitle(note, props.lastNote)'></summary>
-            <p go-print='note.CapturedAt'></p>
+            <p go-print='note.RecordedAt'></p>
             <p data-text go-if='note.Text != ""' go-print-string="note.Text"></p>
             <p data-text go-else>(none)</p>
-
-
             <p>
                 <button data-edit>Edit</button>
                 <button data-delete>Delete</button>
                 <button data-process>Process</button>
             </p>
             <p>
-                <audio controls preload="none" src="/voice-note/{{note.Filename}}"></audio>
+                <audio controls preload="none">
+                    <source src="/voice-note/{{note.Filename}}" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
             </p>
         </details>
-        <template go-expr="props.lastNote = note"></template>
     </div>
 </main>
 <script>
