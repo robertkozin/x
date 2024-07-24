@@ -107,10 +107,10 @@ func noteDelete(c *httpx.Ctx) error {
 	r := c.Request()
 	id := r.PathValue("id")
 
-	_, err := db.Exec(r.Context(), `delete from notes where id = ?`, id)
+	_, err := db.Exec(r.Context(), `delete from notes where id = $1`, id)
 	err = oops.Wrap(err)
 
-	return nil
+	return err
 }
 
 func noteEdit(c *httpx.Ctx) error {

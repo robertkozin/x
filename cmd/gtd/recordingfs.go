@@ -28,24 +28,21 @@ type recordingFS struct {
 func (rfs recordingFS) Open(name string) (fs.File, error) {
 	errb := oops.With("name", name)
 	ctx := context.Background()
-	rows, _ := rfs.db.Query(ctx, `select created_at, recording from notes where filename = $1 limit 1`, name)
 
+	rows, _ := rfs.db.Query(ctx, `select created_at, recording from notes where filename = $1 limit 1`, name)
 	exists := rows.Next()
 	if !exists {
-		if err := errb.Wrap(rows.Err()); err != nil {
-			return nil, err
-		}
-		return nil, errb.Wrap(fs.ErrNotExist)
+		return nil, errb.Wrap(rows.Err())
 	}
 
 	var (
 		createdAt   time.Time
 		driverBytes pgtype.DriverBytes
 	)
-	err := errb.Wrap(rows.Scan(&createdAt, &driverBytes)) // TODO: timeout?
+	err := rows.Scan(&createdAt, &driverBytes) // TODO: timeout?
 	if err != nil {
 		rows.Close()
-		return nil, err
+		return nil, errb.Wrap(err)
 	}
 
 	return recordingFile{
