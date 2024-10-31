@@ -18,6 +18,10 @@ func (c *Ctx) Request() *http.Request {
 	return c.request
 }
 
+func (c *Ctx) Req() *http.Request {
+	return c.request
+}
+
 func (c *Ctx) Response() http.ResponseWriter {
 	return c.response
 }

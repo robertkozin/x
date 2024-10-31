@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" go-component="CommentsCtx">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <title>gsites-comments</title>
+</head>
+<body>
+
+<h1>Comments <small>{{.PageId}}</small></h1>
+<details>
+    <summary>Leave a comment</summary>
+    <form method="post">
+        <label for="name">Name</label>
+        <input id="name" name="name" required minlength="3" maxlength="100">
+
+        <label for="comment">Comment</label>
+        <textarea id="comment" name="comment" required minlength="1" maxlength="300"></textarea>
+
+        <button>Submit</button>
+    </form>
+</details>
+
+<div go-for='_, comment := range props.comments'>
+    {{range .Comments}}
+        <div style="padding-bottom: 10px">
+            <span style="font-weight: bolder">{{.Author}}</span> {{.Content}}
+        </div>
+    {{end}}
+</div>
+
+</body>
+</html>

@@ -3,11 +3,64 @@ package htmgo
 import (
 	"errors"
 	"fmt"
+	"github.com/samber/oops"
 	"golang.org/x/tools/imports"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+// input dir, output file, output package
+
+func Generate2(inputDir string, outputFilepath string, outputPackage string) error {
+
+	outputFile, err := os.Create(outputFilepath)
+	if err != nil {
+		oops.Wrap(err)
+	}
+	defer outputFile.Close()
+
+	langBuf := LangBuf{w: outputFile}
+
+	langBuf.Gof("package %s\n\n", outputPackage)
+	langBuf.Gof(`import (
+	"io"
+	"fmt"
+	"context"
+	"github.com/robertkozin/x/htmgo"
+	)
+	
+	`)
+	langBuf.Flush()
+
+	filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
+		if !strings.HasSuffix(info.Name(), ".html") {
+			return nil
+		}
+
+		inputFilepath := filepath.Join(inputDir, info.Name())
+		inputFile, err := os.Open(inputFilepath)
+		if err != nil {
+			return err
+		}
+		defer inputFile.Close()
+
+		// parse and append
+
+		(&Trans{z: NewTokenizer(inputFile), w: LangBuf{w: outputFile}}).DoComponents2()
+
+		return nil
+	})
+
+	outputFile.Close()
+
+	formattedFileBytes, err := imports.Process(outputFilepath, nil, nil)
+	if err != nil {
+		return oops.Wrap(err)
+	}
+
+	return os.WriteFile(outputFilepath, formattedFileBytes, 0644)
+}
 
 func Generate(file string, pkg string) error {
 	dir := filepath.Dir(file)

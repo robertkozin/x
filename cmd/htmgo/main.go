@@ -4,6 +4,7 @@ import (
 	"github.com/robertkozin/x/htmgo"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -14,7 +15,10 @@ func main() {
 		log.Fatal("GOFILE or GOPACKAGE environment variables not set")
 	}
 
-	if err := htmgo.Generate(gofile, gopackage); err != nil {
+	dir := filepath.Dir(gofile)
+	out := filepath.Join(dir, "html.gen.go")
+
+	if err := htmgo.Generate2(dir, out, gopackage); err != nil {
 		log.Fatal(err)
 	}
 }

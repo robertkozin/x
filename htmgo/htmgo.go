@@ -41,7 +41,9 @@ func (p *Trans) Next() TokenType {
 		padIdx := bytes.LastIndexFunc(p.data, func(r rune) bool {
 			return !unicode.IsSpace(r)
 		})
-		if padIdx > -1 {
+		if len(p.data) == 0 {
+
+		} else if padIdx > -1 {
 			p.indent = p.data[padIdx+1:]
 			p.data = p.data[:padIdx+1]
 		} else if padIdx == -1 && len(p.data) > 0 {
@@ -99,6 +101,9 @@ const (
 )
 
 func mapDirectives(b []byte) int {
+	if !bytes.HasPrefix(b, []byte("go-")) {
+		return goNone
+	}
 	b = bytes.TrimPrefix(b, []byte("data-"))
 	b = bytes.TrimPrefix(b, []byte("go-"))
 	b = bytes.TrimPrefix(b, []byte("go"))
@@ -140,17 +145,34 @@ func mapDirectives(b []byte) int {
 	}
 }
 
+func (p *Trans) DoComponents2() {
+	defer p.w.Flush()
+	for {
+		switch p.Next() {
+		case ErrorToken:
+			return
+		case TextToken, EndTagToken, CommentToken, DoctypeToken, SelfClosingTagToken:
+			continue
+		case StartTagToken:
+			if voidElements[p.tag] || p.directives[goComponent] == nil {
+				continue
+			}
+			p.doOpenTag(p.tag)
+		}
+	}
+}
+
 func (p *Trans) DoComponents(pkg string) {
 	// Parse only top level elements with a go-component directive
 	p.w.Gof("package %s\n\n", pkg) // TODO: lol
 	p.w.Gof(`import (
-"io"
-"fmt"
-"context"
-"github.com/robertkozin/x/htmgo"
-)
-
-`)
+	"io"
+	"fmt"
+	"context"
+	"github.com/robertkozin/x/htmgo"
+	)
+	
+	`)
 	defer p.w.Flush()
 	for {
 		switch p.Next() {
